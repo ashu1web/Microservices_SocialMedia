@@ -8,6 +8,7 @@ const { RedisStore } = require("rate-limit-redis");
 const logger = require("./utils/logger");
 const proxy = require("express-http-proxy");
 const errorHandler = require("./middleware/errorhandler");
+const { validateToken } = require("./middleware/authMiddleware");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -54,6 +55,7 @@ const proxyOptions = {
   },
 };
 
+
 //setting up proxy for our identity service
 app.use(
   "/v1/auth",
@@ -73,6 +75,55 @@ app.use(
   })
 );
 
+//setting up proxy for our post service
+app.use(
+  "/v1/posts",
+  validateToken,
+  proxy(process.env.POST_SERVICE_URL, {
+    ...proxyOptions,
+    proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
+      proxyReqOpts.headers["Content-Type"] = "application/json";
+      proxyReqOpts.headers["x-user-id"] = srcReq.user.userId;
+
+      return proxyReqOpts;
+    },
+    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+      logger.info(
+        `Response received from Post service: ${proxyRes.statusCode}`
+      );
+
+      return proxyResData;
+    },
+  })
+);
+
+
+//setting up proxy for our media service
+app.use(
+  "/v1/media",
+  validateToken,
+  proxy(process.env.MEDIA_SERVICE_URL, {
+    ...proxyOptions,
+    proxyReqOptDecorator: (proxyReqOpts, srcReq) => { 
+      proxyReqOpts.headers["x-user-id"] = srcReq.user.userId;
+      if (!srcReq.headers["content-type"].startsWith("multipart/form-data")) {
+        proxyReqOpts.headers["Content-Type"] = "application/json";
+      }
+
+      return proxyReqOpts;
+    },
+    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+      logger.info(
+        `Response received from media service: ${proxyRes.statusCode}`
+      );
+
+      return proxyResData;
+    },
+    parseReqBody: false,
+  })
+);
+
+
 
 app.use(errorHandler);
 
@@ -81,5 +132,11 @@ app.listen(PORT, () => {
   logger.info(
     `Identity service is running on port ${process.env.IDENTITY_SERVICE_URL}`
   );
+  logger.info(
+    `Post service is running on port ${process.env.POST_SERVICE_URL}`
+  );
+  logger.info(
+    `Media service is running on port ${process.env.MEDIA_SERVICE_URL}`
+  );
   logger.info(`Redis Url ${process.env.REDIS_URL}`);
-});
+}); 
