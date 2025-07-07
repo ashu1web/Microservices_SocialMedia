@@ -6,7 +6,7 @@ accessToken (JWT, short-lived)
 refreshToken (random hex, long-lived, saved in DB)
 Created using:
 js
-Copy code
+Copy code 
 jwt.sign({ userId, username }, secret, { expiresIn: "60m" });
 
 
