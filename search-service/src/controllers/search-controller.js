@@ -1,7 +1,7 @@
 const Search = require("../models/Search");
 const logger = require("../utils/logger");
 
-//implement caching here for 2 to 5 min
+
 const searchPostController = async (req, res) => {
   logger.info("Search endpoint hit!");
   try {

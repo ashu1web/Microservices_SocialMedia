@@ -39,7 +39,7 @@ app.use((req,res,next)=>{
 })
 
 
-//DDos protection and rate limiting
+
 const rateLimiter = new RateLimiterRedis({
   storeClient: redisClient,
   keyPrefix: "middleware",
@@ -59,7 +59,6 @@ app.use((req, res, next) => {
 });
 
 
-//Ip based rate limiting for sensitive endpoints
 const sensitiveEndpointsLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 50,
@@ -75,13 +74,13 @@ const sensitiveEndpointsLimiter = rateLimit({
 });
 
 
-//apply this sensitiveEndpointsLimiter to our routes
+
 app.use("/api/auth/register", sensitiveEndpointsLimiter);
 
 //Routes
 app.use("/api/auth", routes);
 
-//error handler      =>to handle error while req
+//error handler      =>to handle error while req res cycle
 app.use(errorHandler);
 
 app.listen(PORT, () => {
@@ -90,18 +89,9 @@ app.listen(PORT, () => {
 
 
 
-//unhandled promise rejection
+//unhandled promise rejection outside req,res cylce or routes
 
 process.on("unhandledRejection", (reason, promise) => {
   logger.error("Unhandled Rejection at", promise, "reason:", reason);
 });
 
-
-
-
-/*
-Situation=>Error in Express route
-app.get('/error', (req, res, next) => {
-  next(new Error('I am the error'));
-});
-*/

@@ -14,7 +14,6 @@ async function invalidatePostCache(req, input) {
 }
 
 
-
 const createPost = async (req, res) => {
   logger.info("Create post endpoint hit");
   try {
@@ -35,9 +34,16 @@ const createPost = async (req, res) => {
       content,
       mediaIds: mediaIds || [],
     });
-    
+
     await newlyCreatedPost.save();
-    
+
+    await publishEvent("post.created", {
+      postId: newlyCreatedPost._id.toString(),
+      userId: newlyCreatedPost.user.toString(),
+      content: newlyCreatedPost.content,
+      createdAt: newlyCreatedPost.createdAt,
+    });
+
     await invalidatePostCache(req, newlyCreatedPost._id.toString());
 
     logger.info("Post created successfully", newlyCreatedPost);
@@ -146,7 +152,7 @@ const deletePost = async (req, res) => {
       });
     }
 
-     //publish post delete method -> post.deleted-routing key
+    //publish post delete method -> post.deleted-routing key
     await publishEvent("post.deleted", {
       postId: post._id.toString(),
       userId: req.user.userId,
@@ -168,4 +174,4 @@ const deletePost = async (req, res) => {
 };
 
 
-module.exports={createPost,getAllPosts,getPost,deletePost}
+module.exports = { createPost, getAllPosts, getPost, deletePost }

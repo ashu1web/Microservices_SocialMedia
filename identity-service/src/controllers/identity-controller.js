@@ -4,7 +4,7 @@ const generateTokens = require("../utils/generateToken");
 const logger = require('../utils/logger')
 const { validateRegistration, validatelogin } = require('../utils/validation')
 
-
+ 
 //user registration
 const registerUser = async (req, res) => {
   logger.info("Registration endpoint hit...");
@@ -32,7 +32,7 @@ const registerUser = async (req, res) => {
 
     user = new User({ username, email, password });
     await user.save();
-    logger.warn("User saved successfully", user._id);
+    logger.info("User saved successfully", user._id);
 
     const { accessToken, refreshToken } = await generateTokens(user);
 
@@ -50,7 +50,6 @@ const registerUser = async (req, res) => {
     });
   }
 };
-
 
 //user login
 const loginUser = async (req, res) => {
@@ -101,63 +100,6 @@ const loginUser = async (req, res) => {
   }
 };
 
-
-//refresh token
-const refreshTokenUser = async (req, res) => {
-  logger.info("Refresh token endpoint hit...");
-  try {
-    const { refreshToken } = req.body;
-    if (!refreshToken) {
-      logger.warn("Refresh token missing");
-      return res.status(400).json({
-        success: false,
-        message: "Refresh token missing",
-      });
-    }
-
-    const storedToken = await RefreshToken.findOne({ token: refreshToken });
-
-
-    if (!storedToken || storedToken.expiresAt < new Date()) {
-      logger.warn("Invalid or expired refresh token");
-
-      return res.status(401).json({
-        success: false,
-        message: `Invalid or expired refresh token`,
-      });
-    }
-
-    const user = await User.findById(storedToken.user);
-
-    if (!user) {
-      logger.warn("User not found");
-
-      return res.status(401).json({
-        success: false,
-        message: `User not found`,
-      });
-    }
-
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-      await generateTokens(user);
-
-    //delete the old refresh token
-    await RefreshToken.deleteOne({ _id: storedToken._id });
-
-    res.json({
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-    });
-  } catch (e) {
-    logger.error("Refresh token error occured", e);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-
 //logout
 const logoutUser = async (req, res) => {
   logger.info("Logout endpoint hit...");
@@ -196,5 +138,71 @@ const logoutUser = async (req, res) => {
   }
 };
 
+//refresh token
+const refreshTokenUser = async (req, res) => {
+  logger.info("Refresh token endpoint hit...");
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      logger.warn("Refresh token missing");
+      return res.status(400).json({
+        success: false,
+        message: "Refresh token missing",
+      });
+    }
 
-module.exports={registerUser,loginUser,refreshTokenUser,logoutUser}
+   const storedToken = await RefreshToken.findOne({ token: refreshToken });
+    
+    if (!storedToken) {
+      logger.warn("Invalid refresh token provided");
+      return res.status(400).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+
+    if (!storedToken || storedToken.expiresAt < new Date()) {
+      logger.warn("Invalid or expired refresh token");
+
+      return res.status(401).json({
+        success: false,
+        message: `Invalid or expired refresh token`,
+      });
+    }
+    await RefreshToken.deleteOne({ token: refreshToken });
+
+    const user = await User.findById(storedToken.user);
+
+    if (!user) {
+      logger.warn("User not found");
+
+      return res.status(401).json({
+        success: false,
+        message: `User not found`,
+      });
+    }
+
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+      await generateTokens(user);
+
+    //delete the old refresh token
+    await RefreshToken.deleteOne({ _id: storedToken._id });
+
+    res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (e) {
+    logger.error("Refresh token error occured", e);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+
+
+
+module.exports={registerUser,loginUser,logoutUser,refreshTokenUser}

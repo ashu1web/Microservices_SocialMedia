@@ -7,7 +7,8 @@ const handlePostDeleted = async (event) => {
   const { postId, mediaIds } = event;
   try {
     const mediaToDelete = await Media.find({ _id: { $in: mediaIds } });
-
+    console.log("mediaTodelete",mediaToDelete)
+    
     for (const media of mediaToDelete) {
       await deleteMediaFromCloudinary(media.publicId);
       await Media.findByIdAndDelete(media._id);

@@ -19,7 +19,7 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-//rate limiting
+
 const ratelimitOptions = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -123,6 +123,7 @@ app.use(
   })
 );
 
+
 //setting up proxy for our search service
 app.use(
   "/v1/search",
@@ -160,7 +161,7 @@ app.listen(PORT, () => {
     `Media service is running on port ${process.env.MEDIA_SERVICE_URL}`
   );
   logger.info(
-    `Media service is running on port ${process.env.SEARCH_SERVICE_URL}`
+    `Search service is running on port ${process.env.SEARCH_SERVICE_URL}`
   );
   logger.info(`Redis Url ${process.env.REDIS_URL}`);
 }); 
