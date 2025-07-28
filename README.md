@@ -1,5 +1,5 @@
 ﻿# Microservices_SocialMedia
- JWT Auth & Microservices Flow – Revision Points
+ JWT Auth & Microservices Flow – Revision Points 
 # 1. Token Generation (Identity Service)
 After login/register, you generate:
 accessToken (JWT, short-lived)
