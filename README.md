@@ -1,6 +1,6 @@
 ﻿# Microservices_SocialMedia
  JWT Auth & Microservices Flow – Revision Points 
-# 1. Token Generation (Identity Service)
+# 1. Token Generation (Identity Service) 
 After login/register, you generate:
 accessToken (JWT, short-lived)
 refreshToken (random hex, long-lived, saved in DB)
@@ -77,3 +77,4 @@ Responds with new tokens.
 # 8. Client Stores New Tokens and Continues
 Replaces stored tokens.
 Retries the failed API call with new accessToken.
+
